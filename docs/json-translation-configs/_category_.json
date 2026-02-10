@@ -1,0 +1,10 @@
+{
+  "label": "📝 JSON Translation Configs",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "slug": "json-translation-configs",
+    "title": "JSON Translation Configs",
+    "description": "Comprehensive documentation for creating and managing JSON translation configuration files for Triton"
+  }
+}
