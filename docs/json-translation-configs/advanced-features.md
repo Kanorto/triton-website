@@ -1,23 +1,37 @@
 ---
-description: "Advanced features for JSON translation configs including patterns, server filtering, and special formatting"
+description: "Advanced features: patterns, server filtering, disabled lines, formatting / Продвинутые возможности: паттерны, фильтрация серверов, отключённые строки, форматирование"
 sidebar_position: 5
 ---
 
-# Advanced Features
+# Advanced Features / Продвинутые возможности
 
-## Patterns
+---
 
-:::note[Requirements]
-Requires Triton v2.0.0 or later.
+## Patterns / Паттерны
+
+:::note[Requirements / Требования]
+Requires Triton v2.0.0 or later. / Требуется Triton v2.0.0 или новее.
 :::
 
-Patterns allow you to translate messages **without** editing the original plugin configuration. This is useful when a plugin doesn't allow you to edit its messages or when you want to automatically intercept and replace messages.
+Patterns allow you to translate messages **without** editing the original plugin configuration. This is useful when a plugin doesn't allow you to edit its messages, when messages are hardcoded, or when you want to automatically intercept and replace any matching message.
 
-Each pattern is a [regular expression](https://regexr.com/) (regex) that is checked against every message. When a match is found, the message is replaced with the corresponding translation.
+Паттерны позволяют переводить сообщения **без** изменения оригинальной конфигурации плагина. Это полезно, когда плагин не позволяет редактировать сообщения, когда сообщения захардкодены, или когда вы хотите автоматически перехватывать и заменять любые совпадающие сообщения.
 
-### Basic Pattern Usage
+Each pattern is a [regular expression](https://regexr.com/) (regex) that is checked against every outgoing message. When a match is found, the message is replaced with the corresponding translation.
+
+Каждый паттерн — это [регулярное выражение](https://regexr.com/) (regex), которое проверяется для каждого исходящего сообщения. При совпадении сообщение заменяется соответствующим переводом.
+
+:::danger[Performance / Производительность]
+**EN:** Each pattern is checked against **every** message sent to players. Use patterns only when you cannot use [Triton placeholders](../concepts/placeholders.md). Too many patterns can severely impact server performance.
+
+**RU:** Каждый паттерн проверяется для **каждого** сообщения, отправляемого игрокам. Используйте паттерны только когда нельзя использовать [плейсхолдеры Triton](../concepts/placeholders.md). Слишком много паттернов может серьёзно повлиять на производительность сервера.
+:::
+
+### Basic Pattern Usage / Базовое использование паттернов
 
 Add the `patterns` field to any text translation item:
+
+Добавьте поле `patterns` к любому текстовому переводу:
 
 ```json
 {
@@ -25,7 +39,7 @@ Add the `patterns` field to any text translation item:
   "key": "no.permission",
   "languages": {
     "en_GB": "&cYou don't have permission!",
-    "pt_PT": "&cVocê não tem permissão!"
+    "ru_RU": "&cУ вас нет прав!"
   },
   "patterns": [
     "&cYou do not have access to that command\\."
@@ -33,33 +47,35 @@ Add the `patterns` field to any text translation item:
 }
 ```
 
-:::warning[Performance]
-Each pattern is checked against **every** message sent to players. Use patterns only when you cannot use [Triton placeholders](../concepts/placeholders.md) instead. Having too many patterns can impact server performance.
-:::
+When any player receives the message `&cYou do not have access to that command.`, it will be replaced with the translation in their language.
 
-### Escaping Special Characters
+Когда любой игрок получает сообщение `&cYou do not have access to that command.`, оно будет заменено на перевод на его языке.
 
-Since patterns are regex, special characters must be escaped with a backslash (`\`). In JSON, backslashes themselves need to be escaped, so you use double backslashes (`\\`).
+### Escaping Special Characters / Экранирование специальных символов
 
-| Character | Regex Escape | JSON String |
-|-----------|-------------|-------------|
-| `.`       | `\.`        | `\\.`       |
-| `(`       | `\(`        | `\\(`       |
-| `)`       | `\)`        | `\\)`       |
-| `[`       | `\[`        | `\\[`       |
-| `]`       | `\]`        | `\\]`       |
-| `+`       | `\+`        | `\\+`       |
-| `*`       | `\*`        | `\\*`       |
-| `?`       | `\?`        | `\\?`       |
-| `{`       | `\{`        | `\\{`       |
-| `}`       | `\}`        | `\\}`       |
-| `^`       | `\^`        | `\\^`       |
-| `$`       | `\$`        | `\\$`       |
-| `\|`      | `\\|`       | `\\\\|`     |
+Since patterns are regex, special characters must be escaped. In JSON, backslashes must also be escaped, resulting in **double backslashes**:
 
-### Using Anchors
+Поскольку паттерны — это regex, специальные символы нужно экранировать. В JSON обратные косые черты тоже нужно экранировать, что приводит к **двойным обратным косым**:
 
-To prevent patterns from matching text typed by players in chat, use the beginning (`^`) and end (`$`) anchors:
+| Char / Символ | Meaning (EN) | Значение (RU) | Regex Escape | JSON String |
+|---|---|---|---|---|
+| `.` | Any character | Любой символ | `\.` | `\\.` |
+| `(` `)` | Group | Группа | `\(` `\)` | `\\(` `\\)` |
+| `[` `]` | Character class | Класс символов | `\[` `\]` | `\\[` `\\]` |
+| `+` | One or more | Один или более | `\+` | `\\+` |
+| `*` | Zero or more | Ноль или более | `\*` | `\\*` |
+| `?` | Optional | Необязательный | `\?` | `\\?` |
+| `{` `}` | Quantifier | Квантификатор | `\{` `\}` | `\\{` `\\}` |
+| `^` | Start of string | Начало строки | `\^` | `\\^` |
+| `$` | End of string | Конец строки | `\$` | `\\$` |
+| `\|` | Alternation (OR) | Альтернация (ИЛИ) | `\\|` | `\\\\|` |
+| `\` | Escape char | Символ экранирования | `\\` | `\\\\` |
+
+### Using Anchors / Использование якорей
+
+To prevent patterns from matching text typed by players in chat, use beginning `^` and end `$` anchors:
+
+Чтобы паттерны не совпадали с текстом, набранным игроками в чате, используйте якоря начала `^` и конца `$`:
 
 ```json
 {
@@ -69,11 +85,21 @@ To prevent patterns from matching text typed by players in chat, use the beginni
 }
 ```
 
-This ensures the pattern only matches the **exact** message, not a substring within a chat message.
+This ensures the pattern only matches the **exact** message.
 
-### Patterns with Variables
+Это гарантирует, что паттерн совпадёт только с **точным** сообщением.
 
-You can capture dynamic parts of a message using regex groups and use them as variables in the translation:
+:::tip
+**EN:** Always use `^` and `$` anchors for security. Without them, a player could type matching text in chat and trigger an unintended translation.
+
+**RU:** Всегда используйте якоря `^` и `$` для безопасности. Без них игрок может набрать совпадающий текст в чате и вызвать непреднамеренный перевод.
+:::
+
+### Patterns with Variables / Паттерны с переменными
+
+Capture dynamic parts using regex groups `(...)` — they become `%1`, `%2`, etc. in the translation:
+
+Захватывайте динамические части с помощью групп regex `(...)` — они становятся `%1`, `%2` и т.д. в переводе:
 
 ```json
 {
@@ -81,7 +107,7 @@ You can capture dynamic parts of a message using regex groups and use them as va
   "key": "pvp.kill.pattern",
   "languages": {
     "en_GB": "&c%1 &fwas slain by &c%2",
-    "pt_PT": "&c%1 &ffoi morto por &c%2"
+    "ru_RU": "&c%1 &fбыл убит игроком &c%2"
   },
   "patterns": [
     "^(\\w+) was killed by (\\w+)$"
@@ -89,13 +115,16 @@ You can capture dynamic parts of a message using regex groups and use them as va
 }
 ```
 
-In this example:
-- `(\\w+)` captures one or more word characters.
-- The first capture group becomes `%1`, the second becomes `%2`.
+**How it works / Как это работает:**
+- `(\\w+)` captures one or more word characters / захватывает один или более символов слова
+- First capture group `(...)` → `%1` / Первая группа захвата → `%1`
+- Second capture group `(...)` → `%2` / Вторая группа захвата → `%2`
 
-### Multiple Patterns
+### Multiple Patterns / Несколько паттернов
 
-A single translation item can have multiple patterns. If **any** pattern matches, the message is replaced:
+A single item can have multiple patterns. If **any** pattern matches, the message is replaced:
+
+Один элемент может иметь несколько паттернов. Если **любой** паттерн совпадёт, сообщение заменяется:
 
 ```json
 {
@@ -103,19 +132,22 @@ A single translation item can have multiple patterns. If **any** pattern matches
   "key": "no.permission.generic",
   "languages": {
     "en_GB": "&cYou don't have permission!",
-    "pt_PT": "&cVocê não tem permissão!"
+    "ru_RU": "&cУ вас нет прав!"
   },
   "patterns": [
     "^&cYou do not have access to that command\\.$",
     "^&cInsufficient permissions\\.$",
-    "^&cNo permission\\.$"
+    "^&cNo permission\\.$",
+    "^&cI'm sorry, but you do not have permission to perform this command\\.$"
   ]
 }
 ```
 
-### Color Code Variants
+### Color Code Variants in Patterns / Варианты цветовых кодов в паттернах
 
 Depending on the plugin, messages might use `&` or `§` for color codes. You may need to try both:
+
+В зависимости от плагина сообщения могут использовать `&` или `§`. Может понадобиться попробовать оба:
 
 ```json
 {
@@ -127,20 +159,57 @@ Depending on the plugin, messages might use `&` or `§` for color codes. You may
 ```
 
 :::tip
-You can use a regex alternation to match both: `[&§]cNo permission!`
+**EN:** Use regex alternation to match both at once: `[&§]cNo permission!`
+
+**RU:** Используйте regex-альтернацию для совпадения обоих: `[&§]cNo permission!`
 :::
 
-## Server Filtering (BungeeCord)
+### Common Regex Patterns / Распространённые регулярные выражения
+
+| Pattern / Паттерн | Matches (EN) | Совпадает (RU) |
+|---|---|---|
+| `\\w+` | One or more word characters | Один или более символ слова |
+| `\\d+` | One or more digits | Одна или более цифра |
+| `\\S+` | One or more non-whitespace | Один или более непробельный символ |
+| `.+` | One or more any characters | Один или более любой символ |
+| `.*` | Zero or more any characters | Ноль или более любой символ |
+| `\\d{1,3}` | 1 to 3 digits | От 1 до 3 цифр |
+| `[&§]` | Either `&` or `§` | `&` или `§` |
+
+### Where Patterns Work / Где работают паттерны
+
+Patterns work everywhere **except** scoreboards:
+
+Паттерны работают везде, **кроме** скорбордов:
+
+- ✅ Chat messages / Сообщения чата
+- ✅ Action bars / Экшн-бар
+- ✅ Titles & subtitles / Тайтлы и субтайтлы
+- ✅ Items / Предметы
+- ✅ Bossbars / Боссбары
+- ✅ Tab list / Таб-лист
+- ✅ Signs (text content) / Таблички (текстовый контент)
+- ❌ Scoreboards / Скорборды (use PlaceholderAPI / используйте PlaceholderAPI)
+
+---
+
+## Server Filtering (BungeeCord) / Фильтрация серверов (BungeeCord)
 
 :::note
-This feature is only available on BungeeCord (or Velocity) networks.
+**EN:** This feature is only available on BungeeCord or Velocity networks.
+
+**RU:** Эта функция доступна только на сетях BungeeCord или Velocity.
 :::
 
-You can restrict individual text translation items to specific servers using the `servers` and `blacklist` fields.
+You can restrict individual text translation items to specific servers using `servers` and `blacklist` fields. This is separate from collection-level metadata filtering.
 
-### Whitelist Mode
+Можно ограничить отдельные текстовые переводы конкретными серверами с помощью полей `servers` и `blacklist`. Это отдельно от фильтрации на уровне метаданных коллекции.
 
-Show this translation **only** on the listed servers:
+### Whitelist Mode / Режим белого списка
+
+Show this translation **only** on listed servers:
+
+Показывать перевод **только** на перечисленных серверах:
 
 ```json
 {
@@ -148,16 +217,18 @@ Show this translation **only** on the listed servers:
   "key": "lobby.welcome",
   "languages": {
     "en_GB": "&6Welcome to the lobby!",
-    "pt_PT": "&6Bem-vindo ao lobby!"
+    "ru_RU": "&6Добро пожаловать в лобби!"
   },
   "servers": ["lobby-1", "lobby-2"],
   "blacklist": false
 }
 ```
 
-### Blacklist Mode
+### Blacklist Mode / Режим чёрного списка
 
-Show this translation on **all servers except** the listed ones:
+Show this translation on **all servers except** listed ones:
+
+Показывать перевод на **всех серверах, кроме** перечисленных:
 
 ```json
 {
@@ -165,53 +236,40 @@ Show this translation on **all servers except** the listed ones:
   "key": "survival.tip",
   "languages": {
     "en_GB": "&eTip: Watch out for creepers!",
-    "pt_PT": "&eDica: Cuidado com os creepers!"
+    "ru_RU": "&eСовет: Остерегайтесь криперов!"
   },
   "servers": ["creative", "lobby"],
   "blacklist": true
 }
 ```
 
-### Default Behavior
+### All Scenarios / Все сценарии
 
-| Field       | Default | Effect                           |
-|-------------|---------|----------------------------------|
-| `servers`   | `[]`    | No filtering (available everywhere) |
-| `blacklist` | `true`  | Empty blacklist = available everywhere |
+| `blacklist` | `servers` | Result (EN) | Результат (RU) |
+|---|---|---|---|
+| `true` | `[]` | Available everywhere | Доступно везде |
+| `true` | `["creative"]` | Everywhere except creative | Везде, кроме creative |
+| `false` | `["lobby"]` | Only on lobby | Только на lobby |
+| `false` | `[]` | Available nowhere | Недоступно нигде |
+| _(not set)_ | _(not set)_ | Available everywhere (defaults) | Доступно везде (по умолчанию) |
 
-:::tip
-Collection-level metadata filtering and item-level filtering work independently. If a collection's metadata excludes a server, individual items within that collection won't be available on that server regardless of their own `servers` setting.
+:::warning
+**EN:** Collection-level metadata and item-level filtering are **independent**. If a collection excludes a server via metadata, items inside that collection won't be available on that server, even if the item's own `servers` field includes it.
+
+**RU:** Фильтрация на уровне метаданных коллекции и на уровне элемента **независимы**. Если коллекция исключает сервер через метаданные, элементы внутри неё не будут доступны на этом сервере, даже если поле `servers` самого элемента включает его.
 :::
 
-## Formatting Prefixes Summary
+---
 
-Triton supports special prefixes that change how the translation text is processed:
+## Disabled Line Feature / Функция отключённой строки
 
-| Prefix          | Version  | Description                                      |
-|-----------------|----------|--------------------------------------------------|
-| `[triton_json]` | v3.1.0+  | Treats the text as a Minecraft JSON chat component |
-| `[minimsg]`     | v3.5.1+  | Treats the text as Kyori's MiniMessage format (PaperMC only) |
+The `disabled-line` feature (configured in `config.yml`) allows you to suppress specific messages entirely. When a message contains the disabled line placeholder, it is hidden or removed depending on the context.
 
-These prefixes are placed at the **beginning** of the translation value (inside the `languages` object):
+Функция `disabled-line` (настраивается в `config.yml`) позволяет полностью подавить определённые сообщения. Когда сообщение содержит плейсхолдер отключённой строки, оно скрывается или удаляется в зависимости от контекста.
 
-```json
-{
-  "languages": {
-    "en_GB": "[triton_json]{\"text\":\"Hello!\",\"bold\":true}",
-    "pt_PT": "[minimsg]<bold>Olá!</bold>"
-  }
-}
-```
+### Setup / Настройка
 
-:::info
-You can use different formatting prefixes for different languages within the same translation item. However, this is uncommon and generally not recommended for consistency.
-:::
-
-## Disabled Line Feature
-
-The `disabled-line` feature (configured in `config.yml`) allows you to prevent specific messages from being sent to the player. When a message contains the disabled line placeholder, the behavior varies by context.
-
-To use this, set up a translation with a specific key and use it as a placeholder where you want to suppress output:
+**Step 1:** Create a translation with an empty value / Создайте перевод с пустым значением:
 
 ```json
 {
@@ -219,49 +277,161 @@ To use this, set up a translation with a specific key and use it as a placeholde
   "key": "disabled.line",
   "languages": {
     "en_GB": "",
-    "pt_PT": ""
+    "ru_RU": ""
   }
 }
 ```
 
-Then in `config.yml`:
+**Step 2:** Configure in `config.yml` / Настройте в `config.yml`:
+
 ```yaml
 disabled-line: 'disabled.line'
 ```
 
-Any message containing `[lang]disabled.line[/lang]` will be suppressed. The behavior depends on the context:
+**Step 3:** Use in a plugin config / Используйте в конфиге плагина:
 
-- **Chat**: Message is not sent at all
-- **Action bar**: Not displayed
-- **Item titles**: Shows default material name
-- **Item lores**: The line is removed
-- **Books**: The page is deleted
-- **Titles/subtitles**: Not displayed
-- **Tab header/footer**: Removed
-- **Bossbars**: Text becomes blank
-- **GUI titles**: Title becomes blank
-- **Entities**: Display name is hidden
+```yaml
+unwanted-message: '[lang]disabled.line[/lang]'
+```
 
-## All Available Fields Reference
+### Behavior by Context / Поведение по контексту
 
-Here is a complete reference of all fields available for translatable items:
+| Context (EN) | Контекст (RU) | Behavior (EN) | Поведение (RU) |
+|---|---|---|---|
+| Chat | Чат | Message not sent at all | Сообщение не отправляется вообще |
+| Action bar | Экшн-бар | Not displayed; doesn't hide current one | Не отображается; не скрывает текущий |
+| Item titles | Названия предметов | Shows default material name (e.g., "Block of Diamond") | Показывает название материала по умолчанию |
+| Item lores | Описания предметов | The line is removed from lore | Строка удаляется из описания |
+| Books | Книги | The page is deleted | Страница удаляется |
+| Titles | Тайтлы | Neither title nor subtitle sent | Ни тайтл, ни субтайтл не отправляются |
+| Subtitles | Субтайтлы | Only subtitle not sent | Только субтайтл не отправляется |
+| Tab header/footer | Шапка/подвал таба | Header/footer removed | Шапка/подвал удаляются |
+| Bossbars | Боссбары | Text becomes blank | Текст становится пустым |
+| GUI titles | Заголовки GUI | Title becomes blank | Заголовок становится пустым |
+| Entities | Сущности | Display name is hidden | Отображаемое имя скрывается |
+| Custom TABs | Пользовательские ТАБы | Display name swapped for real name | Отображаемое имя заменяется на реальное |
+| Kick | Кик | Kick message becomes blank | Сообщение кика становится пустым |
 
-### Text Translation Fields
+---
 
-| Field       | Required | Type            | Default | Description |
-|-------------|----------|-----------------|---------|-------------|
-| `type`      | ✅       | `"text"`         | —       | Item type identifier |
-| `key`       | ✅       | String          | —       | Unique translation key |
-| `languages` | ✅       | Object          | —       | Translation strings per language |
-| `patterns`  | ❌       | String array    | `[]`    | Regex patterns for auto-matching |
-| `servers`   | ❌       | String array    | `[]`    | Server names for filtering (BungeeCord) |
-| `blacklist` | ❌       | Boolean         | `true`  | Server list mode (BungeeCord) |
+## Formatting Prefixes / Префиксы форматирования
 
-### Sign Translation Fields
+Triton supports special prefixes that change how translation text is processed. These are placed at the **very beginning** of each language's translation value.
 
-| Field       | Required | Type            | Default | Description |
-|-------------|----------|-----------------|---------|-------------|
-| `type`      | ✅       | `"sign"`         | —       | Item type identifier |
-| `key`       | ✅       | String          | —       | Unique sign group key |
-| `lines`     | ✅       | Object          | —       | Sign lines per language (4 strings each) |
-| `locations` | ✅       | Array           | —       | Sign block coordinates |
+Triton поддерживает специальные префиксы, изменяющие обработку текста перевода. Они размещаются в **самом начале** значения перевода каждого языка.
+
+| Prefix / Префикс | Min Version / Мин. версия | Server / Сервер | Description (EN) | Описание (RU) |
+|---|---|---|---|---|
+| `[triton_json]` | v3.1.0 | Spigot/Paper/Forks | Minecraft JSON chat component | JSON-компонент чата Minecraft |
+| `[minimsg]` | v3.5.1 | PaperMC and forks only | Kyori MiniMessage format | Формат MiniMessage от Kyori |
+| _(none/empty)_ | Any | Any | Plain text with `&` color codes | Простой текст с цветовыми кодами `&` |
+
+### How Prefixes Work / Как работают префиксы
+
+- Prefix must be the **first characters** of the translation value. / Префикс должен быть **первыми символами** значения перевода.
+- No spaces before the prefix. / Без пробелов перед префиксом.
+- The rest of the string after the prefix is the content. / Остальная часть строки после префикса — это содержимое.
+- Different languages in the same item can use different prefixes (but not recommended). / Разные языки в одном элементе могут использовать разные префиксы (но не рекомендуется).
+
+```json
+{
+  "languages": {
+    "en_GB": "[triton_json]{\"text\":\"Hello!\",\"bold\":true}",
+    "ru_RU": "[minimsg]<bold>Привет!</bold>"
+  }
+}
+```
+
+See [Text Translations — JSON Chat Components](./text-translations.md#json-chat-components--json-компоненты-чата) and [Text Translations — MiniMessage](./text-translations.md#kyoris-minimessage--minimessage-от-kyori) for detailed syntax.
+
+Подробный синтаксис в [Текстовые переводы — JSON-компоненты](./text-translations.md#json-chat-components--json-компоненты-чата) и [Текстовые переводы — MiniMessage](./text-translations.md#kyoris-minimessage--minimessage-от-kyori).
+
+---
+
+## Terminal Translations / Переводы в терминале
+
+The `terminal` setting in `config.yml` controls whether Triton translates placeholders that appear in the console/terminal output. When enabled, console messages with Triton placeholders will be translated to the default language.
+
+Настройка `terminal` в `config.yml` определяет, переводит ли Triton плейсхолдеры, которые появляются в консоли/терминале. При включении консольные сообщения с плейсхолдерами Triton будут переведены на язык по умолчанию.
+
+```yaml
+# In config.yml / В config.yml:
+terminal: true
+```
+
+---
+
+## Prevent Placeholders in Chat / Предотвращение плейсхолдеров в чате
+
+The `prevent-placeholders-in-chat` setting (default: `true`) prevents players from typing Triton placeholders in chat that would get translated. When enabled, only placeholders in the message prefix or system messages are translated — not the actual player message.
+
+Настройка `prevent-placeholders-in-chat` (по умолчанию: `true`) предотвращает набор игроками плейсхолдеров Triton в чате, которые были бы переведены. При включении переводятся только плейсхолдеры в префиксе сообщения или системных сообщениях — но не в самом сообщении игрока.
+
+```yaml
+# In config.yml / В config.yml:
+prevent-placeholders-in-chat: true
+```
+
+:::tip
+**EN:** Always keep this enabled for security. If disabled, players could insert `[lang]...[/lang]` tags in their messages to trigger translations.
+
+**RU:** Всегда держите это включённым для безопасности. При отключении игроки могут вставлять теги `[lang]...[/lang]` в свои сообщения для срабатывания переводов.
+:::
+
+---
+
+## Customizable Placeholder Tags / Настраиваемые теги плейсхолдеров
+
+In `config.yml`, you can customize the tags used for Triton placeholders per context type:
+
+В `config.yml` можно настроить теги, используемые для плейсхолдеров Triton для каждого типа контекста:
+
+Default tags / Теги по умолчанию:
+- `[lang]...[/lang]` — main tag / основной тег
+- `[args]...[/args]` — arguments wrapper / обёртка аргументов
+- `[arg]...[/arg]` — single argument / один аргумент
+
+You can change these in the `language-creation` section of `config.yml` to avoid conflicts with other plugins.
+
+Вы можете изменить их в секции `language-creation` файла `config.yml` для избежания конфликтов с другими плагинами.
+
+---
+
+## Complete Field Reference (All Types) / Полный справочник полей (Все типы)
+
+### Text Translation Fields / Поля текстового перевода
+
+| Field / Поле | Required / Обяз. | Type / Тип | Default | Description (EN) | Описание (RU) |
+|---|---|---|---|---|---|
+| `type` | ✅ | `"text"` | — | Item type identifier | Идентификатор типа |
+| `key` | ✅ | `String` | — | Unique key for placeholders | Уникальный ключ для плейсхолдеров |
+| `languages` | ✅ | `Object` | — | Translations per language | Переводы по языкам |
+| `patterns` | ❌ | `String[]` | `[]` | Regex auto-matching patterns | Паттерны автоматического совпадения |
+| `servers` | ❌ | `String[]` | `[]` | Server filter list (BungeeCord) | Список фильтрации серверов |
+| `blacklist` | ❌ | `Boolean` | `true` | Server list mode (BungeeCord) | Режим списка серверов |
+
+### Sign Translation Fields / Поля перевода табличек
+
+| Field / Поле | Required / Обяз. | Type / Тип | Default | Description (EN) | Описание (RU) |
+|---|---|---|---|---|---|
+| `type` | ✅ | `"sign"` | — | Item type identifier | Идентификатор типа |
+| `key` | ✅ | `String` | — | Unique key for `/triton sign` | Уникальный ключ для `/triton sign` |
+| `lines` | ✅ | `Object` | — | 4 sign lines per language | 4 строки таблички на каждый язык |
+| `locations` | ✅ | `Array` | — | Sign coordinates | Координаты табличек |
+
+### Collection Metadata Fields (BungeeCord) / Поля метаданных коллекции
+
+| Field / Поле | Required / Обяз. | Type / Тип | Default | Description (EN) | Описание (RU) |
+|---|---|---|---|---|---|
+| `metadata.blacklist` | ❌ | `Boolean` | `true` | Collection server filter mode | Режим фильтрации серверов коллекции |
+| `metadata.servers` | ❌ | `String[]` | `[]` | Collection server list | Список серверов коллекции |
+
+### Location Object Fields / Поля объекта местоположения
+
+| Field / Поле | Required / Обяз. | Type / Тип | Description (EN) | Описание (RU) |
+|---|---|---|---|---|
+| `world` | ✅ | `String` | World name | Имя мира |
+| `x` | ✅ | `Integer` | X coordinate | Координата X |
+| `y` | ✅ | `Integer` | Y coordinate | Координата Y |
+| `z` | ✅ | `Integer` | Z coordinate | Координата Z |
+| `server` | BungeeCord | `String` | Server name | Имя сервера |
